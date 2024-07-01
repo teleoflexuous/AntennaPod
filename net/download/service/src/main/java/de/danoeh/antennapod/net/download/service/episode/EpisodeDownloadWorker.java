@@ -46,13 +46,11 @@ import java.util.concurrent.ExecutionException;
 public class EpisodeDownloadWorker extends Worker {
     private static final String TAG = "EpisodeDownloadWorker";
     private static final Map<String, Integer> notificationProgress = new HashMap<>();
-    private final DownloadAnnouncer downloadAnnouncer;
 
     private Downloader downloader = null;
 
     public EpisodeDownloadWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
-        this.downloadAnnouncer = new DownloadAnnouncer(context);
     }
 
     @Override
@@ -156,6 +154,7 @@ public class EpisodeDownloadWorker extends Worker {
                 Log.e(TAG, "ExecutionException in writeFileUrl: " + e.getMessage());
             }
         }
+
         downloader = new DefaultDownloaderFactory().create(request);
         if (downloader == null) {
             Log.d(TAG, "Unable to create downloader");
@@ -168,8 +167,6 @@ public class EpisodeDownloadWorker extends Worker {
             wifiLock = wifiManager.createWifiLock(TAG);
             wifiLock.acquire();
         }
-
-        downloadAnnouncer.announceDownloadStart(request.getTitle());
         try {
             downloader.call();
         } catch (Exception e) {
@@ -193,7 +190,6 @@ public class EpisodeDownloadWorker extends Worker {
                     getApplicationContext(), downloader.getResult(), request);
             handler.run();
             DBWriter.addDownloadStatus(handler.getUpdatedStatus());
-            downloadAnnouncer.announceDownloadEnd(request.getTitle(), true);
             return Result.success();
         }
 
